@@ -41,3 +41,4 @@ Android Studio → Sync Gradle → uruchom na urządzeniu z internetem.
 - Widget na ekran główny
 - Eksport GPX / nawigacja piesza
 - Wykres pogody 4-dniowej
+"# na-grzyby" 
