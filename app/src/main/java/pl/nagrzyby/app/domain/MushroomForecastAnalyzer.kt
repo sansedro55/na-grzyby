@@ -2,6 +2,7 @@ package pl.nagrzyby.app.domain
 
 import pl.nagrzyby.app.data.model.ForestEnvironmentData
 import pl.nagrzyby.app.data.model.MushroomForecastVerdict
+import pl.nagrzyby.app.data.remote.bdl.BdlSpecies
 import java.util.Calendar
 
 /**
@@ -46,11 +47,15 @@ object MushroomForecastAnalyzer {
             else -> -12
         }
 
-        val treeBonus = when {
-            data.dominantTreeSpecies?.contains("dąb", ignoreCase = true) == true -> 5
-            data.dominantTreeSpecies?.contains("buk", ignoreCase = true) == true -> 4
-            data.dominantTreeSpecies?.contains("sosna", ignoreCase = true) == true -> 2
-            else -> 0
+        val treeBonus = if (data.treeSpeciesComposition.isNotEmpty()) {
+            BdlSpecies.calculateWeightedBonus(data.treeSpeciesComposition)
+        } else {
+            when {
+                data.dominantTreeSpecies?.contains("dąb", ignoreCase = true) == true -> 5
+                data.dominantTreeSpecies?.contains("buk", ignoreCase = true) == true -> 4
+                data.dominantTreeSpecies?.contains("sosna", ignoreCase = true) == true -> 2
+                else -> 0
+            }
         }
         score += treeBonus
         score += seasonBonus(Calendar.getInstance().get(Calendar.MONTH) + 1)
@@ -66,10 +71,17 @@ object MushroomForecastAnalyzer {
 
         val recommendation = buildRecommendation(rain, temp, moisture, finalScore)
 
+        val predictedMushrooms = MushroomPredictor.predict(
+            speciesComposition = data.treeSpeciesComposition,
+            temperature = temp,
+            moisturePercent = moisture,
+        )
+
         return MushroomForecastVerdict(
             scorePercent = finalScore,
             summary = summary,
             recommendation = recommendation,
+            predictedMushrooms = predictedMushrooms,
         )
     }
 

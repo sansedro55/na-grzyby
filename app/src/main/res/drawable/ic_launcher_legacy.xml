@@ -4,7 +4,22 @@
     android:height="48dp"
     android:viewportWidth="48"
     android:viewportHeight="48">
+    <!-- trzon -->
     <path
-        android:fillColor="#2E7D32"
-        android:pathData="M24,8c-6,10 -14,16 -14,24c0,8 6.3,12 14,12s14,-4 14,-12c0,-8 -8,-14 -14,-24z" />
+        android:fillColor="#D7CCC8"
+        android:pathData="M20,24 L28,24 L29,36 Q24,40 19,36 Z" />
+    <!-- kapelusz -->
+    <path
+        android:fillColor="#5D4037"
+        android:pathData="M8,24 Q24,6 40,24 Q24,28 8,24 Z" />
+    <!-- kropki -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M17,17 A2,2 0,1 1 21,17 A2,2 0,1 1 17,17 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M27,18 A2,2 0,1 1 31,18 A2,2 0,1 1 27,18 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M21,13 A1.5,1.5 0,1 1 24,13 A1.5,1.5 0,1 1 21,13 Z" />
 </vector>

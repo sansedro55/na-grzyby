@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
@@ -26,6 +27,17 @@ class UserPreferences(private val context: Context) {
         context.dataStore.data.map { prefs ->
             prefs[NOTIFICATIONS_ENABLED] ?: false
         }
+
+    val themeMode: Flow<String> =
+        context.dataStore.data.map { prefs ->
+            prefs[THEME_MODE] ?: "system"
+        }
+
+    suspend fun setThemeMode(mode: String) {
+        context.dataStore.edit { prefs ->
+            prefs[THEME_MODE] = mode
+        }
+    }
 
     suspend fun toggleFavorite(districtId: String) {
         context.dataStore.edit { prefs ->
@@ -52,5 +64,6 @@ class UserPreferences(private val context: Context) {
     companion object {
         private val FAVORITE_IDS = stringSetPreferencesKey("favorite_district_ids")
         private val NOTIFICATIONS_ENABLED = booleanPreferencesKey("notifications_enabled")
+        private val THEME_MODE = stringPreferencesKey("theme_mode")
     }
 }

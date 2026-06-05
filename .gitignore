@@ -12,3 +12,4 @@
 *.aab
 app/build/
 bdl_*.json
+app/schemas/

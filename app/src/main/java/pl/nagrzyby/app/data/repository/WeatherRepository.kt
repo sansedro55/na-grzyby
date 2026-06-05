@@ -2,6 +2,7 @@ package pl.nagrzyby.app.data.repository
 
 import pl.nagrzyby.app.data.local.WeatherCacheDao
 import pl.nagrzyby.app.data.local.WeatherCacheEntity
+import pl.nagrzyby.app.data.model.ForecastDay
 import pl.nagrzyby.app.data.model.ForestEnvironmentData
 import pl.nagrzyby.app.data.remote.OpenMeteoClient
 import pl.nagrzyby.app.data.remote.openmeteo.HourlyUnits
@@ -40,6 +41,19 @@ class WeatherRepository(
         val litterMoisture = estimateLitterMoisturePercent(response.hourly)
         val treeSpecies = forestRepository.getDominantTreeSpeciesForDistrict(districtId)
 
+        val times = daily.time.orEmpty()
+        val forecastDays = times.drop(pastDayCount).mapIndexedNotNull { i, date ->
+            val precipIdx = pastDayCount + i
+            val tempIdx = pastDayCount + i
+            if (precipIdx < precipitation.size || tempIdx < temperatures.size) {
+                ForecastDay(
+                    date = date,
+                    precipitationSum = precipitation.getOrNull(precipIdx),
+                    temperatureMean = temperatures.getOrNull(tempIdx),
+                )
+            } else null
+        }
+
         val data = ForestEnvironmentData(
             districtId = districtId,
             rainfallLast4DaysMm = rainfallSum,
@@ -48,6 +62,7 @@ class WeatherRepository(
             dominantTreeSpecies = treeSpecies,
             isLoading = false,
             errorMessage = null,
+            forecast = forecastDays,
         )
 
         cache(data)

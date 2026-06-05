@@ -5,6 +5,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
 import pl.nagrzyby.app.logging.DownloadsErrorLogger
 import pl.nagrzyby.app.navigation.NaGrzybyNavGraph
 import pl.nagrzyby.app.notifications.MushroomNotificationHelper
@@ -18,7 +21,9 @@ class MainActivity : ComponentActivity() {
             enableEdgeToEdge()
             val districtId = intent.getStringExtra(MushroomNotificationHelper.EXTRA_DISTRICT_ID)
             setContent {
-                NaGrzybyTheme {
+                val app = LocalContext.current.applicationContext as NaGrzybyApplication
+                val themeMode by app.container.userPreferences.themeMode.collectAsState("system")
+                NaGrzybyTheme(themeMode = themeMode) {
                     NaGrzybyNavGraph(startDistrictId = districtId)
                 }
             }

@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 import pl.nagrzyby.app.NaGrzybyApplication
 import pl.nagrzyby.app.data.local.VerdictHistoryEntity
 import pl.nagrzyby.app.data.model.ForestEnvironmentData
+import pl.nagrzyby.app.data.remote.bdl.BdlSpecies
 import pl.nagrzyby.app.di.AppContainer
 import pl.nagrzyby.app.domain.MushroomForecastAnalyzer
 import pl.nagrzyby.app.logging.DownloadsErrorLogger
@@ -29,6 +30,7 @@ class DetailViewModel(
     private val userPreferences = container.userPreferences
     private val verdictHistoryRepository = container.verdictHistoryRepository
     private val bdlLesnictwaRepository = container.bdlLesnictwaRepository
+    private val bdlWydzieleniaRepository = container.bdlWydzieleniaRepository
 
     private val _uiState = MutableStateFlow(DetailUiState())
     val uiState: StateFlow<DetailUiState> = _uiState.asStateFlow()
@@ -54,6 +56,7 @@ class DetailViewModel(
                 _uiState.update { it.copy(district = district) }
                 loadVerdictHistory()
                 loadBdlForestInfo(district)
+                loadSpeciesComposition(district)
                 loadWeather(district.latitude, district.longitude, forceRefresh = false)
             }
         }
@@ -62,6 +65,41 @@ class DetailViewModel(
     private suspend fun loadVerdictHistory() {
         val history = verdictHistoryRepository.getForDistrict(districtId)
         _uiState.update { it.copy(verdictHistory = history) }
+    }
+
+    private fun loadSpeciesComposition(district: pl.nagrzyby.app.data.model.ForestDistrict) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoadingSpecies = true) }
+            try {
+                val entries = bdlWydzieleniaRepository.fetchSpeciesComposition(district)
+                val summary = if (entries.isNotEmpty()) {
+                    BdlSpecies.describeComposition(entries)
+                } else {
+                    forestRepository.getDominantTreeSpeciesForDistrict(district.id)
+                }
+                _uiState.update {
+                    it.copy(
+                        speciesComposition = summary,
+                        speciesCompositionEntries = entries,
+                        environment = it.environment.copy(
+                            treeSpeciesComposition = entries,
+                            dominantTreeSpecies = if (entries.isNotEmpty()) summary
+                                else it.environment.dominantTreeSpecies,
+                        ),
+                        isLoadingSpecies = false,
+                    )
+                }
+            } catch (e: Exception) {
+                DownloadsErrorLogger.log(
+                    context = getApplication(),
+                    level = "WARN",
+                    tag = "DetailViewModel",
+                    message = "BDL wydzielenia niedostępne dla ${district.id}",
+                    throwable = e,
+                )
+                _uiState.update { it.copy(isLoadingSpecies = false) }
+            }
+        }
     }
 
     private fun loadBdlForestInfo(district: pl.nagrzyby.app.data.model.ForestDistrict) {
@@ -94,26 +132,27 @@ class DetailViewModel(
         loadWeather(district.latitude, district.longitude, forceRefresh = true)
     }
 
-    fun toggleFavorite() {
-        viewModelScope.launch {
-            userPreferences.toggleFavorite(districtId)
-        }
-    }
-
-    fun analyze() {
+    private fun autoAnalyze() {
         val environment = _uiState.value.environment
         if (environment.isLoading || environment.errorMessage != null) return
+        if (environment.rainfallLast4DaysMm == null) return
 
         _uiState.update { it.copy(isAnalyzing = true, verdict = null) }
         val verdict = MushroomForecastAnalyzer.analyze(environment)
-        val district = _uiState.value.district
         viewModelScope.launch {
+            val district = _uiState.value.district
             if (district != null) {
                 verdictHistoryRepository.save(district.id, district.name, verdict)
                 loadVerdictHistory()
             }
         }
         _uiState.update { it.copy(isAnalyzing = false, verdict = verdict) }
+    }
+
+    fun toggleFavorite() {
+        viewModelScope.launch {
+            userPreferences.toggleFavorite(districtId)
+        }
     }
 
     fun formatHistoryDate(epochMs: Long): String =
@@ -152,7 +191,15 @@ class DetailViewModel(
                     longitude = longitude,
                     forceRefresh = forceRefresh,
                 )
-                _uiState.update { it.copy(environment = data) }
+                _uiState.update {
+                    it.copy(environment = data.copy(
+                        treeSpeciesComposition = it.environment.treeSpeciesComposition,
+                        dominantTreeSpecies = it.environment.dominantTreeSpecies
+                            .takeIf { d -> d != null }
+                            ?: data.dominantTreeSpecies,
+                    ))
+                }
+                autoAnalyze()
             } catch (e: Exception) {
                 DownloadsErrorLogger.log(
                     context = getApplication(),

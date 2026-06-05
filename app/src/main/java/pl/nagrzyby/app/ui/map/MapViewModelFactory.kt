@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModelProvider
 
 class MapViewModelFactory(
     private val application: Application,
-    private val districtId: String,
+    private val districtId: String?,
 ) : ViewModelProvider.Factory {
 
     @Suppress("UNCHECKED_CAST")

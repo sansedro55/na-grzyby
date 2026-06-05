@@ -28,4 +28,15 @@ interface VerdictHistoryDao {
         """,
     )
     suspend fun getRecent(limit: Int = 10): List<VerdictHistoryEntity>
+
+    @Query(
+        """
+        SELECT * FROM verdict_history
+        ORDER BY createdAtEpochMs DESC
+        """,
+    )
+    suspend fun getAll(): List<VerdictHistoryEntity>
+
+    @Query("DELETE FROM verdict_history WHERE districtId = :districtId")
+    suspend fun deleteForDistrict(districtId: String)
 }

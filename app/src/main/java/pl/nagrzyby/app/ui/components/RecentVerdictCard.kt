@@ -23,31 +23,32 @@ fun RecentVerdictCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val dateText = SimpleDateFormat("d MMM, HH:mm", Locale("pl", "PL"))
+    val dateText = SimpleDateFormat("d MMM yyyy, HH:mm", Locale("pl", "PL"))
         .format(Date(verdict.createdAtEpochMs))
 
     Card(
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f),
+            containerColor = MaterialTheme.colorScheme.surface,
         ),
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
+        Column(modifier = Modifier.padding(16.dp)) {
             Text(
                 text = verdict.districtName,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold,
             )
             Text(
                 text = "${verdict.scorePercent}% — ${verdict.summary}",
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.padding(top = 4.dp),
             )
             Text(
                 text = dateText,
-                style = MaterialTheme.typography.labelSmall,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp),
             )

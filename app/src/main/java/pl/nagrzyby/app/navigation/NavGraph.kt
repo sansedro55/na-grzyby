@@ -12,6 +12,8 @@ import androidx.navigation.navArgument
 import pl.nagrzyby.app.ui.ForestViewModel
 import pl.nagrzyby.app.ui.detail.DetailScreen
 import pl.nagrzyby.app.ui.detail.DetailViewModelFactory
+import pl.nagrzyby.app.ui.help.HelpScreen
+import pl.nagrzyby.app.ui.history.HistoryScreen
 import pl.nagrzyby.app.ui.main.MainScreen
 import pl.nagrzyby.app.ui.map.MapScreen
 import pl.nagrzyby.app.ui.map.MapViewModelFactory
@@ -20,6 +22,9 @@ object Routes {
     const val MAIN = "main"
     const val DETAIL = "detail/{districtId}"
     const val MAP = "map/{districtId}"
+    const val MAP_SEARCH = "map_search"
+    const val HISTORY = "history"
+    const val HELP = "help"
 
     fun detail(districtId: String) = "detail/$districtId"
     fun map(districtId: String) = "map/$districtId"
@@ -50,6 +55,15 @@ fun NaGrzybyNavGraph(
                 onNavigateToDistrict = { districtId ->
                     navController.navigate(Routes.detail(districtId))
                 },
+                onNavigateToHistory = {
+                    navController.navigate(Routes.HISTORY)
+                },
+                onNavigateToHelp = {
+                    navController.navigate(Routes.HELP)
+                },
+                onNavigateToMapSearch = {
+                    navController.navigate(Routes.MAP_SEARCH)
+                },
                 viewModel = viewModel,
             )
         }
@@ -69,6 +83,12 @@ fun NaGrzybyNavGraph(
                 viewModel = detailViewModel,
                 onBack = { navController.popBackStack() },
                 onShowMap = { navController.navigate(Routes.map(districtId)) },
+                onNavigateToHome = {
+                    navController.navigate(Routes.MAIN) {
+                        popUpTo(Routes.MAIN) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
             )
         }
 
@@ -86,6 +106,64 @@ fun NaGrzybyNavGraph(
             MapScreen(
                 viewModel = mapViewModel,
                 onBack = { navController.popBackStack() },
+                onNavigateToHome = {
+                    navController.navigate(Routes.MAIN) {
+                        popUpTo(Routes.MAIN) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+                onNavigateToDistrict = { districtId ->
+                    navController.navigate(Routes.detail(districtId))
+                },
+            )
+        }
+
+        composable(Routes.MAP_SEARCH) {
+            val mapViewModel: pl.nagrzyby.app.ui.map.MapViewModel = viewModel(
+                factory = MapViewModelFactory(
+                    application = application,
+                    districtId = null,
+                ),
+            )
+            MapScreen(
+                viewModel = mapViewModel,
+                onBack = { navController.popBackStack() },
+                onNavigateToHome = {
+                    navController.navigate(Routes.MAIN) {
+                        popUpTo(Routes.MAIN) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+                onNavigateToDistrict = { districtId ->
+                    navController.navigate(Routes.detail(districtId))
+                },
+            )
+        }
+
+        composable(Routes.HISTORY) {
+            HistoryScreen(
+                recentVerdicts = viewModel.uiState.value.allHistory,
+                isLoading = viewModel.uiState.value.isLoadingHistory,
+                onNavigateToDistrict = { districtId ->
+                    navController.navigate(Routes.detail(districtId))
+                },
+                onNavigateToHome = {
+                    navController.navigate(Routes.MAIN) {
+                        popUpTo(Routes.MAIN) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
+            )
+        }
+
+        composable(Routes.HELP) {
+            HelpScreen(
+                onNavigateToHome = {
+                    navController.navigate(Routes.MAIN) {
+                        popUpTo(Routes.MAIN) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                },
             )
         }
     }

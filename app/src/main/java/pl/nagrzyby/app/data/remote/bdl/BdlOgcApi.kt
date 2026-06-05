@@ -1,6 +1,7 @@
 package pl.nagrzyby.app.data.remote.bdl
 
 import retrofit2.http.GET
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 /**
@@ -23,4 +24,12 @@ interface BdlOgcApi {
         @Query("limit") limit: Int = 15,
         @Query("bbox") bbox: String,
     ): BdlLesnictwaCollectionResponse
+
+    @GET("collections/{collectionName}/items")
+    suspend fun getWydzieleniaItems(
+        @Path("collectionName") collectionName: String,
+        @Query("f") format: String = "json",
+        @Query("limit") limit: Int = 100,
+        @Query("bbox") bbox: String? = null,
+    ): BdlWydzieleniaCollectionResponse
 }

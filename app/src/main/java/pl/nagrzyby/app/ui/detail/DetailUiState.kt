@@ -4,6 +4,7 @@ import pl.nagrzyby.app.data.local.VerdictHistoryEntity
 import pl.nagrzyby.app.data.model.ForestDistrict
 import pl.nagrzyby.app.data.model.ForestEnvironmentData
 import pl.nagrzyby.app.data.model.MushroomForecastVerdict
+import pl.nagrzyby.app.data.remote.bdl.BdlSpeciesEntry
 
 data class DetailUiState(
     val district: ForestDistrict? = null,
@@ -14,4 +15,7 @@ data class DetailUiState(
     val verdictHistory: List<VerdictHistoryEntity> = emptyList(),
     val bdlForestSummary: String? = null,
     val isLoadingBdlForest: Boolean = false,
+    val speciesComposition: String? = null,
+    val speciesCompositionEntries: List<BdlSpeciesEntry> = emptyList(),
+    val isLoadingSpecies: Boolean = false,
 )

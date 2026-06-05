@@ -26,6 +26,49 @@ object GeometryCentroid {
         }
     }
 
+    fun isInside(latitude: Double, longitude: Double, geometry: JsonElement?): Boolean {
+        if (geometry == null || geometry.isJsonNull || !geometry.isJsonObject) return false
+        val obj = geometry.asJsonObject
+        val type = obj.get("type")?.asString ?: return false
+        val coordinates = obj.get("coordinates") ?: return false
+        return when (type) {
+            "Polygon" -> pointInPolygon(latitude, longitude, coordinates.asJsonArray)
+            "MultiPolygon" -> {
+                val multi = coordinates.asJsonArray
+                for (i in 0 until multi.size()) {
+                    if (pointInPolygon(latitude, longitude, multi[i].asJsonArray)) return true
+                }
+                false
+            }
+            else -> false
+        }
+    }
+
+    /** Ray-casting: czy punkt (lat, lon) znajduje się w wielokącie GeoJSON. */
+    private fun pointInPolygon(latitude: Double, longitude: Double, rings: JsonArray): Boolean {
+        if (rings.size() == 0) return false
+        val outer = rings[0].asJsonArray
+        var inside = false
+        var j = outer.size() - 1
+        for (i in 0 until outer.size()) {
+            val pi = outer[i].asJsonArray
+            val pj = outer[j].asJsonArray
+            if (pi.size() < 2 || pj.size() < 2) { j = i; continue }
+            // GeoJSON: [lon, lat]
+            val xi = pi[0].asDouble
+            val yi = pi[1].asDouble
+            val xj = pj[0].asDouble
+            val yj = pj[1].asDouble
+            if ((yi > latitude) != (yj > latitude) &&
+                longitude < (xj - xi) * (latitude - yi) / (yj - yi) + xi
+            ) {
+                inside = !inside
+            }
+            j = i
+        }
+        return inside
+    }
+
     private fun centroidFromPolygon(rings: JsonArray): Pair<Double, Double>? {
         if (rings.size() == 0) return null
         val outer = rings[0].asJsonArray

@@ -45,6 +45,36 @@ class BdlForestRepository(
         return remote
     }
 
+    suspend fun fetchNearContainingFirst(
+        searchLatitude: Double,
+        searchLongitude: Double,
+        radiusDegrees: Double = 0.45,
+        limit: Int = 30,
+    ): List<ForestDistrict> {
+        val minLon = searchLongitude - radiusDegrees
+        val minLat = searchLatitude - radiusDegrees
+        val maxLon = searchLongitude + radiusDegrees
+        val maxLat = searchLatitude + radiusDegrees
+        val bbox = "$minLon,$minLat,$maxLon,$maxLat"
+        val response = api.getDistrictItems(limit = limit, bbox = bbox)
+        val features = response.features.orEmpty()
+
+        val entries = features.mapNotNull { feature ->
+            val district = featureToDistrict(feature) ?: return@mapNotNull null
+            val inside = GeometryCentroid.isInside(searchLatitude, searchLongitude, feature.geometry)
+            val km = ForestRepository.haversineKm(searchLatitude, searchLongitude, district.latitude, district.longitude)
+            val rounded = (km * 10).toInt() / 10.0
+            Triple(district, inside, rounded)
+        }
+
+        forestRepository.cacheBdlDistricts(entries.map { it.first })
+
+        val (containing, others) = entries.partition { it.second }
+        val containerSorted = containing.map { it.first.copy(distanceKm = it.third) }
+        val othersSorted = others.sortedBy { it.third }.map { it.first.copy(distanceKm = it.third) }
+        return containerSorted + othersSorted
+    }
+
     private suspend fun fetchAndMap(
         limit: Int,
         bbox: String? = null,

@@ -4,10 +4,29 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+    <!-- cień pod kapeluszem -->
     <path
-        android:fillColor="#2E7D32"
-        android:pathData="M54,20c-12,18 -28,28 -28,44c0,15 12.6,24 28,24s28,-9 28,-24c0,-16 -16,-26 -28,-44z" />
+        android:fillColor="#BCAAA4"
+        android:pathData="M22,50 Q54,58 86,50 L86,54 Q54,64 22,54 Z" />
+    <!-- trzon -->
+    <path
+        android:fillColor="#D7CCC8"
+        android:pathData="M44,50 L64,50 L66,82 Q54,90 42,82 Z" />
+    <!-- kapelusz -->
+    <path
+        android:fillColor="#5D4037"
+        android:pathData="M18,52 Q54,14 90,52 Q54,60 18,52 Z" />
+    <!-- kropki -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M54,52m-6,0a6,6 0,1 1,12 0a6,6 0,1 1,-12 0" />
+        android:pathData="M38,34 A5,5 0,1 1 48,34 A5,5 0,1 1 38,34 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M60,36 A4,4 0,1 1 68,36 A4,4 0,1 1 60,36 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M48,24 A3,3 0,1 1 54,24 A3,3 0,1 1 48,24 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M72,40 A3,3 0,1 1 78,40 A3,3 0,1 1 72,40 Z" />
 </vector>

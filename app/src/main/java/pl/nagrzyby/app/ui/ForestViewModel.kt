@@ -41,7 +41,7 @@ class ForestViewModel(
             try {
                 forestRepository.ensureSeeded()
                 refreshDistrictList()
-                loadRecentVerdicts()
+                loadAllHistory()
             } catch (e: Exception) {
                 DownloadsErrorLogger.log(
                     context = application,
@@ -62,6 +62,23 @@ class ForestViewModel(
             userPreferences.notificationsEnabled.collect { enabled ->
                 _uiState.update { it.copy(notificationsEnabled = enabled) }
             }
+        }
+        viewModelScope.launch {
+            userPreferences.themeMode.collect { mode ->
+                _uiState.update { it.copy(currentThemeMode = mode) }
+            }
+        }
+    }
+
+    fun toggleTheme() {
+        viewModelScope.launch {
+            val current = _uiState.value.currentThemeMode
+            val next = when (current) {
+                "dark" -> "light"
+                "light" -> "system"
+                else -> "dark"
+            }
+            userPreferences.setThemeMode(next)
         }
     }
 
@@ -188,7 +205,11 @@ class ForestViewModel(
                 local,
                 fromBdlName,
             )
-            val withDistance = applyDistanceIfNeeded(merged)
+            val withDistance = if (placeDistricts.isNotEmpty()) {
+                merged.sortedBy { it.distanceKm ?: Double.MAX_VALUE }
+            } else {
+                applyDistanceIfNeeded(merged)
+            }
             _uiState.update {
                 it.copy(
                     districts = withDistance,
@@ -214,22 +235,25 @@ class ForestViewModel(
         return !normalized.startsWith("nadleś") && !normalized.contains("nadleśnictwo")
     }
 
-    private suspend fun loadRecentVerdicts() {
-        val entries = verdictHistoryRepository.getRecent(limit = 5)
-        val ui = entries.map { entry ->
-            RecentVerdictUi(
-                districtId = entry.districtId,
-                districtName = entry.districtName,
-                scorePercent = entry.scorePercent,
-                summary = entry.summary,
-                createdAtEpochMs = entry.createdAtEpochMs,
-            )
+    fun loadAllHistory() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoadingHistory = true) }
+            try {
+                val entries = verdictHistoryRepository.getAllDistinct()
+                val ui = entries.map { entry ->
+                    RecentVerdictUi(
+                        districtId = entry.districtId,
+                        districtName = entry.districtName,
+                        scorePercent = entry.scorePercent,
+                        summary = entry.summary,
+                        createdAtEpochMs = entry.createdAtEpochMs,
+                    )
+                }
+                _uiState.update { it.copy(allHistory = ui, isLoadingHistory = false) }
+            } catch (_: Exception) {
+                _uiState.update { it.copy(isLoadingHistory = false) }
+            }
         }
-        _uiState.update { it.copy(recentVerdicts = ui) }
-    }
-
-    fun refreshRecentVerdicts() {
-        viewModelScope.launch { loadRecentVerdicts() }
     }
 
     private suspend fun refreshDistrictList() {

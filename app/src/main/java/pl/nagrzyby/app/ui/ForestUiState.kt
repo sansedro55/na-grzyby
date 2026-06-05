@@ -12,7 +12,9 @@ data class ForestUiState(
     val isSortedByDistance: Boolean = false,
     val snackbarMessage: String? = null,
     val notificationsEnabled: Boolean = false,
-    val recentVerdicts: List<RecentVerdictUi> = emptyList(),
+    val allHistory: List<RecentVerdictUi> = emptyList(),
+    val isLoadingHistory: Boolean = false,
     /** np. „Miejscowość: Balczewo” gdy wynik z geokodowania */
     val placeSearchCaption: String? = null,
+    val currentThemeMode: String = "system",
 )

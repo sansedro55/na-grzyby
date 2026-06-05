@@ -12,7 +12,7 @@ import androidx.room.RoomDatabase
         VerdictHistoryEntity::class,
     ],
     version = 2,
-    exportSchema = false,
+    exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
 
@@ -31,7 +31,6 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "na_grzyby.db",
                 )
-                    .fallbackToDestructiveMigration()
                     .build()
                     .also { instance = it }
             }

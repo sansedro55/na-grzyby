@@ -15,6 +15,7 @@ class VerdictHistoryRepository(
     ) {
         val score = verdict.scorePercent ?: return
         val summary = verdict.summary ?: return
+        dao.deleteForDistrict(districtId)
         dao.insert(
             VerdictHistoryEntity(
                 districtId = districtId,
@@ -30,4 +31,11 @@ class VerdictHistoryRepository(
     suspend fun getForDistrict(districtId: String) = dao.getForDistrict(districtId)
 
     suspend fun getRecent(limit: Int = 10) = dao.getRecent(limit)
+
+    suspend fun getAll() = dao.getAll()
+
+    suspend fun getAllDistinct(): List<VerdictHistoryEntity> {
+        val all = dao.getAll()
+        return all.distinctBy { it.districtId }
+    }
 }

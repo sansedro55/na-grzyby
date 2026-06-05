@@ -2,6 +2,7 @@ package pl.nagrzyby.app.ui.map
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -9,10 +10,12 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import org.osmdroid.events.MapEventsReceiver
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
+import org.osmdroid.views.overlay.MapEventsOverlay
 import pl.nagrzyby.app.logging.DownloadsErrorLogger
 import pl.nagrzyby.app.map.OsmdroidInitializer
 
@@ -23,6 +26,9 @@ fun OsmMapView(
     districtName: String,
     userLatitude: Double?,
     userLongitude: Double?,
+    tappedLatitude: Double? = null,
+    tappedLongitude: Double? = null,
+    onLongPress: ((Double, Double) -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -56,15 +62,32 @@ fun OsmMapView(
         }
     }
 
+    val tappedMarkerRef = remember { mutableStateOf<Marker?>(null) }
+
+    // Główna konfiguracja: overlays + wyśrodkowanie (przy zmianie dystryktu lub lokalizacji użytkownika)
     DisposableEffect(
         districtLatitude,
         districtLongitude,
         userLatitude,
         userLongitude,
         districtName,
+        onLongPress,
     ) {
         try {
             mapView.overlays.clear()
+            tappedMarkerRef.value = null
+
+            val eventsOverlay = onLongPress?.let { callback ->
+                MapEventsOverlay(object : MapEventsReceiver {
+                    override fun singleTapConfirmedHelper(p: GeoPoint): Boolean = false
+                    override fun longPressHelper(p: GeoPoint): Boolean {
+                        callback(p.latitude, p.longitude)
+                        return true
+                    }
+                })
+            }
+            if (eventsOverlay != null) mapView.overlays.add(eventsOverlay)
+
             val districtPoint = GeoPoint(districtLatitude, districtLongitude)
             val districtMarker = Marker(mapView).apply {
                 position = districtPoint
@@ -76,9 +99,8 @@ fun OsmMapView(
             val userLat = userLatitude
             val userLon = userLongitude
             if (userLat != null && userLon != null) {
-                val userPoint = GeoPoint(userLat, userLon)
                 val userMarker = Marker(mapView).apply {
-                    position = userPoint
+                    position = GeoPoint(userLat, userLon)
                     title = "Twoja lokalizacja"
                     setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
                 }
@@ -112,6 +134,26 @@ fun OsmMapView(
                 throwable = e,
             )
         }
+        onDispose { }
+    }
+
+    // Osobny efekt tylko dla znacznika wybranego punktu – nie wyśrodkowuje mapy
+    DisposableEffect(tappedLatitude, tappedLongitude) {
+        try {
+            tappedMarkerRef.value?.let { mapView.overlays.remove(it) }
+            tappedMarkerRef.value = null
+
+            if (tappedLatitude != null && tappedLongitude != null) {
+                val marker = Marker(mapView).apply {
+                    position = GeoPoint(tappedLatitude, tappedLongitude)
+                    title = "Wybrany punkt"
+                    setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                }
+                mapView.overlays.add(marker)
+                tappedMarkerRef.value = marker
+            }
+            mapView.invalidate()
+        } catch (_: Exception) { }
         onDispose { }
     }
 

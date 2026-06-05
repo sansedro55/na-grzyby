@@ -16,7 +16,7 @@ interface OpenMeteoApi {
         @Query("daily") daily: String = "precipitation_sum,temperature_2m_mean",
         @Query("hourly") hourly: String = "relative_humidity_2m,soil_moisture_0_to_7cm",
         @Query("past_days") pastDays: Int = 4,
-        @Query("forecast_days") forecastDays: Int = 1,
+        @Query("forecast_days") forecastDays: Int = 3,
         @Query("timezone") timezone: String = "auto",
     ): OpenMeteoForecastResponse
 }

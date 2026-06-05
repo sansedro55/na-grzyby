@@ -7,6 +7,7 @@ import pl.nagrzyby.app.data.local.WeatherCacheDao
 import pl.nagrzyby.app.data.prefs.UserPreferences
 import pl.nagrzyby.app.data.repository.BdlForestRepository
 import pl.nagrzyby.app.data.repository.BdlLesnictwaRepository
+import pl.nagrzyby.app.data.repository.BdlWydzieleniaRepository
 import pl.nagrzyby.app.data.repository.ForestRepository
 import pl.nagrzyby.app.data.repository.PlaceForestSearchRepository
 import pl.nagrzyby.app.data.repository.VerdictHistoryRepository
@@ -26,6 +27,7 @@ class AppContainer(context: Context) {
         forestRepository = forestRepository,
     )
     val bdlLesnictwaRepository = BdlLesnictwaRepository()
+    val bdlWydzieleniaRepository = BdlWydzieleniaRepository()
     val weatherRepository = WeatherRepository(weatherCacheDao, forestRepository)
     val verdictHistoryRepository = VerdictHistoryRepository(database.verdictHistoryDao())
 }
